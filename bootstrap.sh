@@ -1,19 +1,33 @@
 # Navegamos a la carpeta del proyecto
-cd /vagrant/public
+cd /vagrant
 
-# Instalamos nvm
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+# Instalamos docker
+# Instalamos dependencias
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
 
-# Actualizamos source de bash para usar el comando nuevo de nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# Agregamos llave GPG de docker
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-# Instalamos node 18
-nvm install v18
+# Configuramos el repositorio de docker
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Instalamos dependencias del proyecto
-npm i
+# Actualizamos repositorios
+sudo apt-get update
 
-# Instalamos servidor http de node
-npm install -g http-server
+# Instalamos la última versión de docker
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Clonamos el repositorio de la aplicación
+git clone https://github.com/LagFlow/utn-devops-nextjs-app.git nextjs-app
+
+# Creamos la imagen de la aplicación
+sudo docker build -t nextjs-app .
+
+# Levantamos los contenedores de la aplicación y la base de datos
+sudo docker compose up -d
