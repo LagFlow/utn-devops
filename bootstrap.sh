@@ -31,3 +31,43 @@ sudo docker build -t nextjs-app .
 
 # Levantamos los contenedores de la aplicación y la base de datos
 sudo docker compose up -d
+
+
+# Instalación de puppet
+# Se agrega el repositorio
+wget https://apt.puppet.com/puppet7-release-focal.deb -P /tmp/
+sudo dpkg -i /tmp/puppet7-release-focal.deb
+
+# Actualizamos repositorios
+sudo apt-get update
+  
+# Instalamos java 11
+sudo apt-get install -y openjdk-11-jre
+
+# Instalamos puppet server
+sudo apt-get install -y puppetserver
+
+# Definimos en nombre del host de la máquina virtual a "puppet"
+sudo echo "127.0.0.1  puppetserver  puppet" >> /etc/hosts
+
+# Movemos el archivo de configuración de puppet para que use 512mb de ram
+sudo cp /vagrant/puppetFiles/puppetserver /etc/default/puppetserver
+
+# Movemos los archivos de manifests de puppet
+sudo cp /vagrant/puppetFiles/manifest_site.pp /etc/puppetlabs/code/environments/production/manifests/site.pp
+sudo mkdir -p /etc/puppetlabs/code/environments/production/modules/jenkins/manifests
+sudo cp /vagrant/puppetFiles/module_jenkins_init.pp /etc/puppetlabs/code/environments/production/modules/jenkins/manifests/init.pp
+sudo mkdir -p /etc/puppetlabs/code/environments/production/modules/jenkins/files
+sudo cp /vagrant/puppetFiles/jenkins_repository_file.list /etc/puppetlabs/code/environments/production/modules/jenkins/files/jenkins_repository_file.list
+
+# Habilitamos comunicación en el firewall de ubuntu
+sudo sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+
+# Ejecutamos el servicio de puppet-server
+sudo /opt/puppetlabs/bin/puppet resource service puppetserver ensure=running enable=true
+
+# Ejecutamos el servicio de puppet-agent
+sudo /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true
+
+# Conectamos puppet-agent
+sudo /opt/puppetlabs/bin/puppet ssl bootstrap
