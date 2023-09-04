@@ -71,3 +71,6 @@ sudo /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=tr
 
 # Conectamos puppet-agent
 sudo /opt/puppetlabs/bin/puppet ssl bootstrap
+
+# Instalar node para ejecutar pipelines de jenkins
+sudo snap install node --classic
